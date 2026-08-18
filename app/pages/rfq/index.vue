@@ -116,24 +116,14 @@ const branches = computed(
 
         <div class="row" style="margin-top: 12px; justify-content: flex-end">
           <NuxtLink :to="`/rfq/${session.rfqId}/trace`" class="btn">
-            <AppIcon name="brain" :size="13" /> View reasoning trace
+            <AppIcon name="brain" :size="13" /> Reasoning trace
+          </NuxtLink>
+          <NuxtLink :to="`/rfq/${session.rfqId}`" class="btn primary">
+            Open quotes <AppIcon name="chevronRight" :size="13" />
           </NuxtLink>
         </div>
       </article>
     </div>
 
-    <div class="banner" style="margin-top: 14px">
-      <div class="banner-head warn">
-        <span class="row" style="gap: 6px">
-          <AppIcon name="alert" :size="14" /> Build step 3 — not yet implemented
-        </span>
-      </div>
-      <div class="banner-body">
-        <p class="small muted">
-          Launching new sessions, streaming live progress, and the true-cost bid comparison are
-          still to come. The trace viewer is complete.
-        </p>
-      </div>
-    </div>
   </PageShell>
 </template>

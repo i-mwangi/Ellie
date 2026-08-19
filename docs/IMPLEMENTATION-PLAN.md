@@ -237,7 +237,24 @@ success and healthy status only — never for a button. Amber flags attention, r
 
 ---
 
-## 10. Open dependencies
+## 10. What remains
+
+Everything buildable without Google Cloud is built. Two things are left, and both
+require the cloud project:
+
+1. **`agents/` — the ADK fleet.** No agent code exists. Intake's question selection,
+   category routing, and contradiction flags are deterministic rules in
+   `server/platform/fixtures/`. No model is called anywhere in the product.
+2. **The six `createLiveX()` implementations.** Every one throws until the project is
+   confirmed. The adapter interfaces are stable, so binding them is additive.
+
+Smaller gaps that do not need the cloud, left deliberately: out-of-office approver
+delegation, drag-to-edit on the workflow builder, a realized-savings time series,
+ERP write-back, and a PDF binary writer (export is CSV plus print-ready HTML).
+
+---
+
+## 11. Open dependencies
 
 - Which of Agent Registry, Agent Gateway, and Model Armor are enabled in the GCP project — this
   decides real vs. fixture per component. Verify before step 4.
@@ -246,37 +263,37 @@ success and healthy status only — never for a button. Amber flags attention, r
 
 ---
 
-## 11. Coverage check
+## 12. Coverage check
 
 ### Ellie feature surface
 
 | Marketing claim | Where it lives | Status |
 |---|---|---|
-| Chat intake, plain language | `intake/ChatPanel.vue` + `POST /api/intake/message` | Step 2 |
-| Email-forwarded intake | `POST /api/webhooks/intake-email` | Step 2 — route planned, no handler |
-| Attachments (specs, drawings, invoices) | Armor-screened upload path | Step 2 — screening works, no upload UI |
-| Multilingual, transparent translation | Tri-panel requester/RFQ/supplier view + detected language per turn | Step 2 |
-| Category-specific questions | Ellie prompt + Memory Bank category profiles | Step 2 |
-| Live structured RFQ, contradiction and over-spec flags | `intake/RfqDraft.vue` | Step 2 |
-| Repeat categories skip answered questions | Memory Bank recall | Step 2 — adapter ready, no learning loop |
+| Chat intake, plain language | `intake/ChatTurn.vue` + `POST /api/intake/message` | **Done** |
+| Email-forwarded intake | `POST /api/webhooks/intake-email` | **Done** |
+| Attachments (specs, drawings, invoices) | `POST /api/intake/attach` — screened, fields extracted | **Done** |
+| Multilingual, transparent translation | `intake/TranslationPanel.vue` tri-panel | **Done** (fixture strings) |
+| Category-specific questions | `fixtures/intake.ts` question scripts | **Done** (scripted, not a model) |
+| Live structured RFQ, contradiction and over-spec flags | `intake/RfqDraft.vue` | **Done** |
+| Repeat categories skip answered questions | Memory Bank recall in `message.post.ts` | **Done** (recall; no write-back yet) |
 | Requesters never see suppliers or pricing | Agent Identity scopes + server-side role filter | **Done, verified** |
-| AP/ERP ingest, supplier-name normalization, dedupe, categorization | Spend Analyst | Real UI, fixture data |
-| True cost adjusted for payment terms | `savings/TrueCostTable.vue` | Step 3 |
-| Five detectors (harmonization, terms, drift, off-contract, consolidation) | Spend Analyst detector set, `savings/index.vue` | Real UI, fixture data |
-| Producers behind distributors | Supplier Discovery sub-agent via Gateway | Step 3 |
-| PDF / Excel exec summaries | `GET /api/savings/:id/export` | Step 3 |
-| Realized savings + cost avoidance tracking | `savings/SavingsTile.vue` | Fixture data |
-| "Many wins need no supplier switch" | Quick-wins grouping on `savings/index.vue` | Step 3 |
-| Quick-reply chips under Ellie's questions | `intake/QuickReplies.vue` | Step 2 |
-| RFQ status badges — BUILDING / READY TO SEND / FLAGGED — MISSING | `intake/RfqDraft.vue` | Step 2 |
-| Seven-step intake narrative (sentence → sourcing) | Intake progress rail | Step 2 |
-| No-code node-based workflow builder | `approvals/workflow.vue` | Step 5, cuttable |
-| Authority-matrix routing by amount and category | Governance agent | Step 5 |
-| Sequential + parallel approvers, OOO delegation | Governance agent | Step 5, cuttable |
-| Auto-draft PO on final approval | Governance agent | Step 5 |
+| AP/ERP ingest, supplier-name normalization, dedupe, categorization | Baseline panel on `savings/index.vue` | **Fixture only** — needs a real ERP/AP feed |
+| True cost adjusted for payment terms | `fixtures/sourcing.ts` `trueCost()` | **Done** |
+| Five detectors (harmonization, terms, drift, off-contract, consolidation) | `fixtures/savings.ts` + `savings/index.vue` | **Done** (fixture data) |
+| Producers behind distributors | `viaDiscovery` on quotes; sub-agent via Gateway | **Done** (fixture data) |
+| PDF / Excel exec summaries | `GET /api/savings/:id/export` — CSV + print-ready HTML | **Done** (no PDF binary writer) |
+| Realized savings + cost avoidance tracking | Totals on `savings/index.vue` | **Partial** — totals only, no time series |
+| "Many wins need no supplier switch" | Quick-wins grouping on `savings/index.vue` | **Done** |
+| Quick-reply chips under Ellie's questions | `intake/ChatTurn.vue` | **Done** |
+| RFQ status badges — BUILDING / READY TO SEND / FLAGGED — MISSING | `intake/RfqDraft.vue` | **Done** |
+| Seven-step intake narrative (sentence → sourcing) | `intake/StepRail.vue` | **Done** |
+| No-code node-based workflow builder | `approvals/workflow.vue` | **Done** (renders matrix; editing read-only) |
+| Authority-matrix routing by amount and category | `fixtures/governance.ts` `bandFor()` | **Done** |
+| Sequential + parallel approvers, OOO delegation | Approval steps | **Partial** — parallel done, OOO delegation not |
+| Auto-draft PO on final approval | `decide.post.ts` | **Done** |
 | Procurement controls all market-facing messages | Gateway policy | **Done** |
 | Audit log, reasons, timestamps | Agent Observability | **Done** |
-| Mandatory justification for exceptions | Approval decision route | Step 5 |
+| Mandatory justification for exceptions | `decide.post.ts` — 422 without one | **Done** |
 | Real-time budget / unvetted-supplier / contract checks | **Gateway policy**, surfaced in guardrail feed | **Done** |
 | ERP sync, PO lifecycle | Adapter stub | Fixture only |
 | Per-organization data isolation | Tenant-scoped identity + memory namespace | Enforced, single tenant seeded |

@@ -40,6 +40,45 @@ const awaiting = ref<string | null>(null)
 const categoryId = ref<string | undefined>()
 const latest = ref<IntakeResponse | null>(null)
 const sending = ref(false)
+const attachment = ref<{ filename: string; accepted: boolean; extracted: Record<string, string>; redactions: number; reason?: string } | null>(null)
+
+/** Which of the seven stages the conversation is currently in. */
+const activeStep = computed(() => {
+  if (!turns.value.length) return 0
+  if (latest.value?.rfq?.complete) return 6
+  if (latest.value?.flags.length) return 3
+  if (turns.value.length > 2) return 2
+  return 1
+})
+
+const translation = computed(() => {
+  if (!latest.value?.category) return null
+  return latest.value.category.id === 'packaging'
+    ? {
+        requester: { lang: 'TR', text: 'İzmir fabrikası için sevkiyat kolileri gerekiyor.' },
+        rfq: { lang: 'EN', text: 'Shipping cartons, double-wall BC, 3-week delivery.' },
+        supplier: { lang: 'VI', text: 'Thùng carton sóng BC, giao trong 3 tuần.' },
+      }
+    : {
+        requester: { lang: 'TR', text: 'Depo ekibi için 500 çift iş ayakkabısı.' },
+        rfq: { lang: 'EN', text: '500 pairs S3 safety shoes, 4-week delivery.' },
+        supplier: { lang: 'VI', text: '500 đôi giày bảo hộ S3, giao trong 4 tuần.' },
+      }
+})
+
+async function onFile(event: Event) {
+  const file = (event.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  const text = await file.text()
+  attachment.value = await $fetch('/api/intake/attach', {
+    method: 'POST',
+    body: { filename: file.name, text },
+  })
+  // Anything the file settled is treated as answered.
+  for (const [key, value] of Object.entries(attachment.value?.extracted ?? {})) {
+    answers.value[key] = value
+  }
+}
 
 async function send(text: string) {
   if (!text.trim() || sending.value) return
@@ -77,6 +116,7 @@ function reset() {
   awaiting.value = null
   categoryId.value = undefined
   latest.value = null
+  attachment.value = null
 }
 </script>
 
@@ -143,6 +183,8 @@ function reset() {
       </div>
     </template>
 
+    <StepRail :active="activeStep" />
+
     <p class="tiny faint" style="margin-bottom: 8px">Ellie</p>
     <p class="lede" style="margin-bottom: 16px">
       Describe what you need in plain language. Ellie asks the questions that actually change the
@@ -160,6 +202,36 @@ function reset() {
       <p class="tiny faint" style="margin-top: 10px">
         <AppIcon name="file" :size="11" /> Or forward an email — Ellie picks it up as a request
       </p>
+    </div>
+
+    <label v-if="!turns.length" class="attach">
+      <AppIcon name="file" :size="14" />
+      <span class="small">Attach a spec sheet, drawing, or old invoice</span>
+      <input type="file" accept=".txt,.md,.csv,.json" hidden @change="onFile" />
+    </label>
+
+    <div v-if="attachment" class="banner" style="margin-bottom: 14px">
+      <div class="banner-head" :class="attachment.accepted ? '' : 'danger'">
+        <span class="row" style="gap: 6px">
+          <AppIcon :name="attachment.accepted ? 'checkCircle' : 'alert'" :size="14" />
+          {{ attachment.filename }}
+        </span>
+      </div>
+      <div class="banner-body">
+        <p v-if="!attachment.accepted" class="small muted">{{ attachment.reason }}</p>
+        <template v-else>
+          <p class="small muted">
+            Screened and read. {{ Object.keys(attachment.extracted).length }} field(s) filled from
+            the file<span v-if="attachment.redactions">, {{ attachment.redactions }} redaction(s)
+            applied</span>.
+          </p>
+          <div class="row" style="margin-top: 8px">
+            <span v-for="(v, k) in attachment.extracted" :key="k" class="chip blue mono">
+              {{ k }}: {{ v }}
+            </span>
+          </div>
+        </template>
+      </div>
     </div>
 
     <ChatTurn
@@ -188,6 +260,14 @@ function reset() {
       <div class="banner-body">
         <p class="small muted">{{ flag.message }}</p>
       </div>
+    </div>
+
+    <div v-if="translation && latest?.rfq" style="margin-top: 12px">
+      <TranslationPanel
+        :requester="translation.requester"
+        :rfq="translation.rfq"
+        :supplier="translation.supplier"
+      />
     </div>
 
     <div v-if="latest?.rfq?.complete" class="banner" style="margin-top: 10px">
@@ -235,6 +315,23 @@ function reset() {
 .example:hover {
   border-color: var(--accent-border);
   background: var(--accent-soft);
+}
+
+.attach {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  margin-bottom: 14px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.attach:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .composer {

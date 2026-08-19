@@ -1,7 +1,30 @@
 <script setup lang="ts">
 import type { AgentDescriptor } from '~~/server/platform/types'
 
-const { data } = await useFetch<{ mode: string; agents: AgentDescriptor[] }>('/api/fleet/agents')
+const { data, refresh } = await useFetch<{ mode: string; agents: AgentDescriptor[] }>(
+  '/api/fleet/agents'
+)
+
+const CATEGORIES = ['packaging', 'facilities', 'mro', 'logistics']
+const hiring = ref<string | null>(null)
+const pick = ref<Record<string, string>>({})
+const error = ref('')
+
+async function hire(agent: AgentDescriptor) {
+  hiring.value = agent.id
+  error.value = ''
+  try {
+    await $fetch('/api/fleet/hire', {
+      method: 'POST',
+      body: { agentId: agent.id, category: pick.value[agent.id] ?? CATEGORIES[0] },
+    })
+    await refresh()
+  } catch (e: any) {
+    error.value = e?.statusMessage ?? 'Could not hire that agent.'
+  } finally {
+    hiring.value = null
+  }
+}
 
 const hired = computed(() => data.value?.agents.filter((a) => a.status === 'hired').length ?? 0)
 </script>
@@ -63,6 +86,10 @@ const hired = computed(() => data.value?.agents.filter((a) => a.status === 'hire
       </div>
     </template>
 
+    <p v-if="error" class="card small" style="color: var(--red); margin-bottom: 10px">
+      {{ error }}
+    </p>
+
     <div class="stack">
       <article v-for="agent in data?.agents" :key="agent.id" class="card">
         <div class="between">
@@ -98,9 +125,25 @@ const hired = computed(() => data.value?.agents.filter((a) => a.status === 'hire
           </p>
         </div>
 
-        <p v-if="agent.hiredFor.length" class="tiny faint" style="margin-top: 9px">
-          Hired for {{ agent.hiredFor.join(', ') }}
-        </p>
+        <div class="between" style="margin-top: 11px; align-items: center">
+          <p class="tiny faint">
+            {{ agent.hiredFor.length ? `Hired for ${agent.hiredFor.join(', ')}` : 'Not hired yet' }}
+          </p>
+          <div class="row" style="gap: 6px; flex-wrap: nowrap">
+            <select
+              :value="pick[agent.id] ?? CATEGORIES[0]"
+              style="width: auto"
+              @change="pick[agent.id] = ($event.target as HTMLSelectElement).value"
+            >
+              <option v-for="category in CATEGORIES" :key="category" :value="category">
+                {{ category }}
+              </option>
+            </select>
+            <button class="btn primary" :disabled="hiring === agent.id" @click="hire(agent)">
+              {{ hiring === agent.id ? 'Hiring…' : 'Hire' }}
+            </button>
+          </div>
+        </div>
       </article>
     </div>
   </PageShell>

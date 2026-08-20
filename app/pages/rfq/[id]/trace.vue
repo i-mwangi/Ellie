@@ -51,9 +51,9 @@ const counts = computed(() => {
       </nav>
 
       <div class="context-actions">
-        <button class="context-action" disabled>
+        <a :href="`/api/rfq/${rfqId}/trace?format=csv`" class="context-action">
           <AppIcon name="file" :size="14" /> Export trace
-        </button>
+        </a>
       </div>
     </template>
 

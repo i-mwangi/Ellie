@@ -1,7 +1,29 @@
 <script setup lang="ts">
 import type { AgentSession } from '~~/server/platform/types'
 
-const { data } = await useFetch<{ canSeeMarketData: boolean; sessions: AgentSession[] }>('/api/rfq')
+const { data, refresh } = await useFetch<{
+  canSeeMarketData: boolean
+  sessions: AgentSession[]
+}>('/api/rfq')
+
+const launching = ref(false)
+const launchError = ref('')
+
+async function launch() {
+  launching.value = true
+  launchError.value = ''
+  try {
+    await $fetch(`/api/rfq/${data.value?.sessions[0]?.rfqId ?? 'rfq-2411-corrugated'}/launch`, {
+      method: 'POST',
+    })
+    await refresh()
+  } catch (e: any) {
+    // A requester is refused here by Gateway policy, not by a hidden button.
+    launchError.value = e?.data?.statusMessage ?? e?.statusMessage ?? 'Launch refused.'
+  } finally {
+    launching.value = false
+  }
+}
 
 const branches = computed(
   () => data.value?.sessions.reduce((sum, s) => sum + s.branches, 0) ?? 0
@@ -39,19 +61,13 @@ const branches = computed(
       </nav>
 
       <div class="context-actions">
-        <button class="context-action" disabled>
-          <AppIcon name="broadcast" :size="14" /> Send broadcast
+        <button class="context-action" :disabled="launching" @click="launch">
+          <AppIcon name="broadcast" :size="14" />
+          {{ launching ? 'Starting…' : 'Start another cycle' }}
         </button>
-        <button class="context-action" disabled>
-          <AppIcon name="refresh" :size="14" /> Invite to re-bid
-        </button>
-        <button class="context-action" disabled>
-          <AppIcon name="flag" :size="14" /> Request BAFO
-        </button>
-        <div class="divider" />
-        <button class="context-action danger" disabled>
-          <AppIcon name="trash" :size="14" /> Delete request
-        </button>
+        <NuxtLink to="/savings" class="context-action">
+          <AppIcon name="activity" :size="14" /> Savings findings
+        </NuxtLink>
       </div>
     </template>
 
@@ -75,9 +91,13 @@ const branches = computed(
             <span class="k"><AppIcon name="users" :size="13" /> Sessions</span>
             <span class="small">{{ data?.sessions.length }}</span>
           </div>
-          <button class="btn primary wide" disabled style="margin-top: 4px">
-            Send request <AppIcon name="send" :size="13" />
-          </button>
+          <NuxtLink
+            :to="`/rfq/${data?.sessions[0]?.rfqId ?? ''}`"
+            class="btn primary wide"
+            style="margin-top: 4px"
+          >
+            Open comparison <AppIcon name="chevronRight" :size="13" />
+          </NuxtLink>
         </div>
       </div>
     </template>
@@ -88,6 +108,15 @@ const branches = computed(
       concurrent supplier conversations and survives for weeks — which is why negotiation state
       lives in Memory Bank rather than in a request body.
     </p>
+
+    <div v-if="launchError" class="banner" style="margin-bottom: 12px">
+      <div class="banner-head danger">
+        <span class="row" style="gap: 6px">
+          <AppIcon name="shield" :size="14" /> Refused by Gateway policy
+        </span>
+      </div>
+      <div class="banner-body"><p class="small muted">{{ launchError }}</p></div>
+    </div>
 
     <div class="stack">
       <article v-for="session in data?.sessions" :key="session.id" class="card">

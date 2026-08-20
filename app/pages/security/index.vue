@@ -74,9 +74,9 @@ const blocked = computed(
         <button class="context-action" :disabled="screening" @click="screen">
           <AppIcon name="send" :size="14" /> Screen pasted content
         </button>
-        <button class="context-action" disabled>
+        <a href="/api/security/audit" class="context-action">
           <AppIcon name="file" :size="14" /> Export audit log
-        </button>
+        </a>
       </div>
     </template>
 

@@ -5,15 +5,15 @@ const showReasoning = ref(true)
 
 <template>
   <PageShell
-    title="Fortified fleet — foundations"
+    title="Fortified fleet"
     subtitle="Today"
-    timestamp="Build status as of step 4"
+    timestamp="Build status"
   >
     <template #context>
       <div class="context-meta">
         <div>
           <div class="meta-label"><AppIcon name="layers" :size="11" /> Step</div>
-          <span class="chip blue">1 &amp; 4 DONE</span>
+          <span class="chip blue">1–5 DONE</span>
         </div>
         <div>
           <div class="meta-label"><AppIcon name="activity" :size="11" /> Platform</div>
@@ -40,17 +40,13 @@ const showReasoning = ref(true)
       </nav>
 
       <div class="context-actions">
-        <button class="context-action" disabled>
-          <AppIcon name="broadcast" :size="14" /> Run spend analysis
-        </button>
-        <button class="context-action" disabled>
-          <AppIcon name="flag" :size="14" /> Launch sourcing cycle
-        </button>
+        <NuxtLink to="/savings" class="context-action">
+          <AppIcon name="activity" :size="14" /> Run spend analysis
+        </NuxtLink>
+        <NuxtLink to="/rfq" class="context-action">
+          <AppIcon name="flag" :size="14" /> Open sourcing cycle
+        </NuxtLink>
       </div>
-    </template>
-
-    <template #top>
-      <button class="btn ghost"><AppIcon name="globe" :size="13" /> Language</button>
     </template>
 
     <template #aside>
@@ -96,7 +92,8 @@ const showReasoning = ref(true)
     <p v-if="showReasoning" class="lede" style="margin-bottom: 14px">
       The platform layer is structured around the seven Gemini Enterprise Agent Platform
       components. Every one sits behind an interface with a fixture implementation, so the product
-      runs end to end with no cloud access at all.
+      runs end to end with no cloud access at all — intake, sourcing, savings, and governance
+      included.
     </p>
 
     <div class="card" style="padding: 0">
@@ -123,19 +120,39 @@ const showReasoning = ref(true)
       </div>
 
       <div class="card-section">
-        <h2>Critical gaps</h2>
+        <h2>What the product does</h2>
+        <ul class="bullets small">
+          <li>
+            <strong>Intake.</strong> A sentence becomes a sourceable RFQ — category questions,
+            quick replies, contradiction flags, attachments, and transparent translation.
+          </li>
+          <li>
+            <strong>Savings.</strong> Five detectors over a normalised AP baseline, split into
+            quick wins that need no supplier change and findings that need sourcing.
+          </li>
+          <li>
+            <strong>Sourcing.</strong> Quotes re-based onto standard payment terms before
+            comparison, with live session progress and a reasoning trace.
+          </li>
+          <li>
+            <strong>Governance.</strong> Authority-matrix routing, mandatory justification on
+            exceptions, and a PO drafted only when the final step clears.
+          </li>
+        </ul>
+      </div>
+
+      <div class="card-section">
+        <h2>Critical gap</h2>
         <p class="small muted" style="margin-top: 5px">
-          Two things stand between this and a live demo:
+          One thing stands between this and a live demo:
         </p>
         <div class="inset" style="margin-top: 10px">
           <ul class="bullets small" style="margin: 0">
             <li>
-              <strong>Agents.</strong> No ADK code yet. Intake and the sourcing spine are steps 2
-              and 3.
-            </li>
-            <li>
-              <strong>Cloud access.</strong> Every <code>createLiveX()</code> throws until the GCP
-              project is confirmed. Components flip independently.
+              <strong>No agents, no cloud.</strong> There is no ADK code and no model call
+              anywhere — intake's questions are deterministic rules. Every
+              <code>createLiveX()</code> throws until the GCP project is confirmed, and components
+              flip independently once it is.
             </li>
           </ul>
         </div>
@@ -151,13 +168,13 @@ const showReasoning = ref(true)
     <div class="banner">
       <div class="banner-head">
         <span class="row" style="gap: 6px">
-          <AppIcon name="checkCircle" :size="14" /> Foundations and fortification screens are ready
+          <AppIcon name="checkCircle" :size="14" /> Every screen that does not need the cloud is built
         </span>
       </div>
       <div class="banner-body">
         <p class="small muted">
-          Registry, reasoning trace, guardrail feed, and memory inspector all work on fixtures.
-          Steps 2, 3, and 5 add intake, live sourcing, and governance.
+          Intake, savings, sourcing, approvals, registry, reasoning trace, guardrail feed, and
+          the memory inspector all work on fixtures. What remains is the agent fleet itself.
         </p>
         <div class="row" style="margin-top: 11px; justify-content: flex-end">
           <NuxtLink to="/fleet" class="btn">Open registry</NuxtLink>

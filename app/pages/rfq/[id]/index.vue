@@ -100,9 +100,9 @@ const iconFor = (kind: string) =>
           <AppIcon name="activity" :size="14" />
           {{ streaming ? 'Streaming…' : 'Watch live progress' }}
         </button>
-        <button class="context-action" disabled>
-          <AppIcon name="flag" :size="14" /> Request BAFO
-        </button>
+        <a :href="`/api/rfq/${rfqId}/trace?format=csv`" class="context-action">
+          <AppIcon name="file" :size="14" /> Export trace
+        </a>
       </div>
     </template>
 

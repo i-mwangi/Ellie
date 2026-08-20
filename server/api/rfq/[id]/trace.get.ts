@@ -26,6 +26,27 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'No trace recorded' })
   }
 
+  if (String(getQuery(event).format ?? '').toLowerCase() === 'csv') {
+    const esc = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`
+    const rows = [
+      ['Timestamp', 'Kind', 'Step', 'Rationale', 'Identity', 'Duration (ms)'],
+      ...trace.steps.map((step) => [
+        step.at,
+        step.kind,
+        step.label,
+        step.rationale ?? '',
+        step.identity ?? '',
+        step.durationMs ?? '',
+      ]),
+    ]
+
+    setResponseHeaders(event, {
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': `attachment; filename="${agentSession.id}-trace.csv"`,
+    })
+    return rows.map((row) => row.map(esc).join(',')).join('\r\n')
+  }
+
   return {
     session: agentSession,
     trace,

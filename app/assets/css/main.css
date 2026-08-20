@@ -280,6 +280,16 @@ button {
   cursor: default;
 }
 
+.context-action .why {
+  margin-left: auto;
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  color: var(--faint);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
 .context-action.danger {
   color: var(--red);
 }

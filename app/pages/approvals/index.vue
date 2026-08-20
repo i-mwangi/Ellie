@@ -95,9 +95,9 @@ const pending = computed(() => data.value?.requests.filter((r) => r.state === 'p
       </nav>
 
       <div class="context-actions">
-        <button class="context-action" disabled>
-          <AppIcon name="plus" :size="14" /> Edit authority matrix
-        </button>
+        <NuxtLink to="/approvals/workflow" class="context-action">
+          <AppIcon name="layers" :size="14" /> Authority matrix
+        </NuxtLink>
       </div>
     </template>
 

@@ -60,11 +60,13 @@ const hired = computed(() => data.value?.agents.filter((a) => a.status === 'hire
       </nav>
 
       <div class="context-actions">
-        <button class="context-action" disabled>
+        <button class="context-action" disabled title="Requires the GCP project">
           <AppIcon name="plus" :size="14" /> Publish new version
+          <span class="why">CLOUD</span>
         </button>
-        <button class="context-action" disabled>
+        <button class="context-action" disabled title="Requires the GCP project">
           <AppIcon name="refresh" :size="14" /> Sync from Agent Engine
+          <span class="why">CLOUD</span>
         </button>
       </div>
     </template>

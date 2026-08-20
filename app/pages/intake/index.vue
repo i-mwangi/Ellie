@@ -40,6 +40,9 @@ const awaiting = ref<string | null>(null)
 const categoryId = ref<string | undefined>()
 const latest = ref<IntakeResponse | null>(null)
 const sending = ref(false)
+const fileInput = ref<HTMLInputElement | null>(null)
+const LANGS = ['EN', 'TR', 'DE', 'VI']
+const rfqLang = ref('EN')
 const attachment = ref<{ filename: string; accepted: boolean; extracted: Record<string, string>; redactions: number; reason?: string } | null>(null)
 
 /** Which of the seven stages the conversation is currently in. */
@@ -51,17 +54,33 @@ const activeStep = computed(() => {
   return 1
 })
 
+/** The RFQ is written in whichever language procurement picks, independent of both parties. */
+const RFQ_TEXT: Record<string, Record<string, string>> = {
+  packaging: {
+    EN: 'Shipping cartons, double-wall BC, 3-week delivery.',
+    TR: 'Sevkiyat kolileri, çift oluklu BC, 3 hafta teslimat.',
+    DE: 'Versandkartons, doppelwellig BC, Lieferung in 3 Wochen.',
+    VI: 'Thùng carton sóng BC hai lớp, giao trong 3 tuần.',
+  },
+  footwear: {
+    EN: '500 pairs S3 safety shoes, 4-week delivery.',
+    TR: '500 çift S3 iş ayakkabısı, 4 hafta teslimat.',
+    DE: '500 Paar S3-Sicherheitsschuhe, Lieferung in 4 Wochen.',
+    VI: '500 đôi giày bảo hộ S3, giao trong 4 tuần.',
+  },
+}
+
 const translation = computed(() => {
   if (!latest.value?.category) return null
   return latest.value.category.id === 'packaging'
     ? {
         requester: { lang: 'TR', text: 'İzmir fabrikası için sevkiyat kolileri gerekiyor.' },
-        rfq: { lang: 'EN', text: 'Shipping cartons, double-wall BC, 3-week delivery.' },
+        rfq: { lang: rfqLang.value, text: RFQ_TEXT.packaging[rfqLang.value] ?? RFQ_TEXT.packaging.EN },
         supplier: { lang: 'VI', text: 'Thùng carton sóng BC, giao trong 3 tuần.' },
       }
     : {
         requester: { lang: 'TR', text: 'Depo ekibi için 500 çift iş ayakkabısı.' },
-        rfq: { lang: 'EN', text: '500 pairs S3 safety shoes, 4-week delivery.' },
+        rfq: { lang: rfqLang.value, text: RFQ_TEXT.footwear[rfqLang.value] ?? RFQ_TEXT.footwear.EN },
         supplier: { lang: 'VI', text: '500 đôi giày bảo hộ S3, giao trong 4 tuần.' },
       }
 })
@@ -156,12 +175,15 @@ function reset() {
         <button class="context-action" @click="reset">
           <AppIcon name="refresh" :size="14" /> Start a new request
         </button>
-        <button class="context-action" disabled>
+        <button class="context-action" @click="fileInput?.click()">
           <AppIcon name="file" :size="14" /> Attach a spec sheet
         </button>
-        <button class="context-action" disabled>
-          <AppIcon name="globe" :size="14" /> Change language
-        </button>
+        <div class="context-action" style="gap: 8px">
+          <AppIcon name="globe" :size="14" /> RFQ language
+          <select v-model="rfqLang" style="width: auto; margin-left: auto; padding: 2px 6px">
+            <option v-for="lang in LANGS" :key="lang" :value="lang">{{ lang }}</option>
+          </select>
+        </div>
       </div>
     </template>
 
@@ -207,7 +229,7 @@ function reset() {
     <label v-if="!turns.length" class="attach">
       <AppIcon name="file" :size="14" />
       <span class="small">Attach a spec sheet, drawing, or old invoice</span>
-      <input type="file" accept=".txt,.md,.csv,.json" hidden @change="onFile" />
+      <input ref="fileInput" type="file" accept=".txt,.md,.csv,.json" hidden @change="onFile" />
     </label>
 
     <div v-if="attachment" class="banner" style="margin-bottom: 14px">

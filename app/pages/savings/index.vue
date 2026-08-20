@@ -67,8 +67,9 @@ const rest = computed(() => data.value?.findings.filter((f) => !f.noSupplierSwit
       </nav>
 
       <div class="context-actions">
-        <button class="context-action" disabled>
+        <button class="context-action" disabled title="Needs a live ERP or AP feed">
           <AppIcon name="refresh" :size="14" /> Re-import AP export
+          <span class="why">ERP</span>
         </button>
       </div>
     </template>

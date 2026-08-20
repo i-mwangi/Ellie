@@ -5,6 +5,29 @@ const { data, error, refresh } = await useFetch<{ namespace: string; facts: Memo
   '/api/fleet/memory'
 )
 
+const adding = ref(false)
+const draft = ref({ category: 'packaging', subject: '', fact: '' })
+const saving = ref(false)
+
+async function remember() {
+  if (!draft.value.subject.trim() || !draft.value.fact.trim()) {
+    failure.value = 'Subject and fact are both required.'
+    return
+  }
+  saving.value = true
+  failure.value = null
+  try {
+    await $fetch('/api/fleet/memory', { method: 'POST', body: draft.value })
+    draft.value = { category: 'packaging', subject: '', fact: '' }
+    adding.value = false
+    await refresh()
+  } catch (e: any) {
+    failure.value = e?.statusMessage ?? 'Could not save that fact.'
+  } finally {
+    saving.value = false
+  }
+}
+
 const pending = ref<string | null>(null)
 const failure = ref<string | null>(null)
 
@@ -53,11 +76,8 @@ async function forget(fact: MemoryFact) {
       </nav>
 
       <div class="context-actions">
-        <button class="context-action" disabled>
-          <AppIcon name="plus" :size="14" /> Add a fact manually
-        </button>
-        <button class="context-action" disabled>
-          <AppIcon name="refresh" :size="14" /> Re-learn from intake
+        <button class="context-action" @click="adding = !adding">
+          <AppIcon name="plus" :size="14" /> {{ adding ? 'Cancel' : 'Add a fact manually' }}
         </button>
       </div>
     </template>
@@ -103,6 +123,24 @@ async function forget(fact: MemoryFact) {
       <div v-if="failure" class="banner" style="margin-bottom: 12px">
         <div class="banner-head danger">
           <span class="row" style="gap: 6px"><AppIcon name="alert" :size="14" /> {{ failure }}</span>
+        </div>
+      </div>
+
+      <div v-if="adding" class="card" style="margin-bottom: 12px">
+        <h3>Teach the fleet a fact</h3>
+        <p class="tiny faint" style="margin-top: 4px">
+          Stored in this tenant's namespace and written to the audit log.
+        </p>
+        <div class="stack" style="margin-top: 10px; gap: 8px">
+          <input v-model="draft.category" type="text" placeholder="Category, e.g. packaging" />
+          <input v-model="draft.subject" type="text" placeholder="Subject" />
+          <input v-model="draft.fact" type="text" placeholder="The fact itself" />
+        </div>
+        <div class="row" style="margin-top: 10px; justify-content: flex-end">
+          <button class="btn" @click="adding = false">Cancel</button>
+          <button class="btn primary" :disabled="saving" @click="remember">
+            {{ saving ? 'Saving…' : 'Remember it' }}
+          </button>
         </div>
       </div>
 
